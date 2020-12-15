@@ -33,6 +33,26 @@ A cookie is a small piece of text stored on a user's computer by their browser.
 
 ### Dependencies
 
-`npm install express-sessions`
+#### 'express-session'
+
+'express-session' provides a session middleware for express.
+
+`npm install express-session`
+
+---
+
+Import 'express-session'
+
+`const session = require('express-session')`
+
+Usage
+
+`session(options)`
+
+Options
+
+`'express-session'` accepts the following properties in the options object.
 
 
+
+### Implementation
