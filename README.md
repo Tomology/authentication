@@ -2,10 +2,12 @@
 
 ## Table of Contents
 
-1. [Session Based Authentication] (#session)
+1. [Session Based Authentication](#session-based-authentication)
 
-- Dependencies
+   - [Dependencies](#dependencies)
 
 2. Token Based Authentication
 
-## Session Based Authentication (#session)
+## Session Based Authentication
+
+### Dependencies
