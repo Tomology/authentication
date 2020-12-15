@@ -49,21 +49,22 @@ A cookie is a small piece of text stored on a user's computer by their browser.
 
 `'express-session'` accepts the following properties in the options object:
 
-- **cookie**
-  An object that contains the settings for the session ID cookie. The default value is:
-  ` { path: '/', httpOnly: true, secure: false, maxAge: null, }`
+**cookie**<br>
+
+An object that contains the settings for the session ID cookie. The default value is:
+` { path: '/', httpOnly: true, secure: false, maxAge: null, }`
 
 The following options can be set in this object:
 
-`domain`
+`domain`<br>
 Host to which the cookie will be set. If omitted, defaults to the host of the current URL.
 
-`maxAge`
+`maxAge`<br>
 Number of milliseconds until the cookie expires. Sets the `expires` option by taking the
 current server time and adding `maxAge` milliseconds to the value to calculate an `Expires`
 datetime. By default, no maximum age is set.
 
-`expires`
+`expires`<br>
 The maximum lifetime of the cookie. By default, no expiration is set, and most clients will
 consider this a "non-persistent" cookie and will delete it on a condition like exiting a web
 browser application.
@@ -71,15 +72,15 @@ browser application.
 what is used. The `expires` option should not be set directly; instead only use the `maxAge`
 option.
 
-`httpOnly`
+`httpOnly`<br>
 Forbids JavaScript from accessing the cookie, e.g. through the `Document.cookie` property, when
 set to `true`.
 
-`path`
+`path`<br>
 A path that must exist in the requested URL, or the browser won't send the `Cookie` header. By default,
 this is set to '/', which is the root path of the domain.
 
-`sameSite`
+`sameSite`<br>
 Controls whether a cookie is sent with cross-origin requests, providing some protection against
 CSRF attacks.
 
