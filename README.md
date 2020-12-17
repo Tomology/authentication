@@ -84,4 +84,14 @@ this is set to '/', which is the root path of the domain.
 Controls whether a cookie is sent with cross-origin requests, providing some protection against
 CSRF attacks.
 
+`secure`<br>
+If set to true, will only send the cookie with an encrypted request over the HTTPS protocol, never with unsercured HTTP (except on localhost).
+
+`genid`<br>
+Function to call to generate a new session ID. Provide a function that returns a string that will be used as a session ID. The function is given `req` as the first argument if you want to use some value attached to `req` when generating the ID.
+The default value is a function which uses the `uid-safe` library to generate IDs.
+
+`name`<br>
+The name of the session ID cookie to set in the response and read from in the request. The default value is `connect.sid`.
+
 ### Implementation
