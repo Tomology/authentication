@@ -1,5 +1,11 @@
 const express = require("express");
 const session = require("express-session");
+const db = require("./db");
+
+const app = express();
+
+// Middleware
+app.use(express.json());
 
 const TWO_HOURS = 1000 * 60 * 60 * 2;
 
@@ -12,8 +18,6 @@ const {
 } = process.env;
 
 const IN_PROD = NODE_ENV === "production";
-
-const app = express();
 
 app.use(
   session({
@@ -28,6 +32,5 @@ app.use(
     },
   })
 );
-
 
 app.listen(PORT, (req, res) => console.log(`http://localhost:${PORT}`));
