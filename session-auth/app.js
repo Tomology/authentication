@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const db = require("./db");
@@ -32,5 +33,11 @@ app.use(
     },
   })
 );
+
+app.get("/", async (req, res) => {
+  const results = await db.query("SELECT * FROM users");
+  console.log(results.rows);
+  res.end("Hello World");
+});
 
 app.listen(PORT, (req, res) => console.log(`http://localhost:${PORT}`));
