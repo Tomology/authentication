@@ -2,11 +2,15 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const db = require("./db");
+const registerRouter = require("./routes/registerRoutes");
 
 const app = express();
 
 // Middleware
 app.use(express.json());
+
+// Routes
+app.use("/", registerRouter);
 
 const TWO_HOURS = 1000 * 60 * 60 * 2;
 
@@ -34,10 +38,10 @@ app.use(
   })
 );
 
-app.get("/", async (req, res) => {
-  const results = await db.query("SELECT * FROM users");
-  console.log(results.rows);
-  res.end("Hello World");
-});
+// app.get("/", async (req, res) => {
+//   const results = await db.query("SELECT * FROM users");
+//   console.log(results.rows);
+//   res.end("Hello World");
+// });
 
 app.listen(PORT, (req, res) => console.log(`http://localhost:${PORT}`));
