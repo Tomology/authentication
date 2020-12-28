@@ -4,11 +4,33 @@ const Pool = require("../db");
 
 const router = express.Router();
 
+// add created_at, and updated_at fields to users TABLE
+
 router.route("/register").post(async (req, res) => {
   try {
-    // Destructure the req.body (email, password)
+    // Destructure req.body
     const { email, password } = req.body;
-    // Check if user exists (if user exists then throw error)
+
+    // Check required input fields
+    if (!email || !password) {
+      return res.status(400).send("Please provide email and password!");
+    }
+
+    // Check password length (at least 8 characters)
+    if (password.length < 8) {
+      return res
+        .status(400)
+        .send("Please enter a password 8 characters or more!");
+    }
+
+    // Check if valid email
+    const emailRegex = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/;
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).send("Please enter a valid email address!");
+    }
+
+    // Check if user exists
     const user = await Pool.query("SELECT * FROM users WHERE email=$1", [
       email,
     ]);
@@ -16,8 +38,9 @@ router.route("/register").post(async (req, res) => {
     if (user.rows.length !== 0) {
       return res.status(401).send("User already exists");
     }
+
     // Bcrypt the user password
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
 
     const bcryptPassword = await bcrypt.hash(password, salt);
 
@@ -27,8 +50,13 @@ router.route("/register").post(async (req, res) => {
       [email, bcryptPassword]
     );
 
+    // Store user id session
+    // this will set a cookie on the user
+    // keep them logged in
+    req.session.userId = newUser.rows[0].id;
+
+    // Send response
     res.json(newUser.rows[0]);
-    // Generating our session
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
