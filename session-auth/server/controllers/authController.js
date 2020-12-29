@@ -1,5 +1,4 @@
 const bcrypt = require("bcrypt");
-const { restart } = require("nodemon");
 const pool = require("../db");
 
 exports.signUp = async (req, res) => {
@@ -90,13 +89,23 @@ exports.login = async (req, res) => {
     // this will set a cookie on the user
     // keep them logged in
     req.session.userId = user.rows[0].user_id;
-
+    console.log(req.session);
     // Send response without password field
     delete user.rows[0].password;
 
     res.json(user.rows[0]);
   } catch (err) {
-    console.error(err);
+    console.error(err.message);
     res.status(500).send("Server Error");
   }
+};
+
+exports.protect = async (req, res, next) => {
+  // Get session id
+  if (!req.session.userId) {
+    console.log("User not authenticated");
+  } else {
+    console.log("User authenticated!");
+  }
+  next();
 };
