@@ -1,12 +1,10 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-const Pool = require("../db");
+const pool = require("../db");
 
 const router = express.Router();
 
-// add created_at, and updated_at fields to users TABLE
-
-router.route("/register").post(async (req, res) => {
+const registerUser = async (req, res) => {
   try {
     // Destructure req.body
     const { email, password } = req.body;
@@ -31,7 +29,7 @@ router.route("/register").post(async (req, res) => {
     }
 
     // Check if user exists
-    const user = await Pool.query("SELECT * FROM users WHERE email=$1", [
+    const user = await pool.query("SELECT * FROM users WHERE email=$1", [
       email,
     ]);
 
@@ -45,7 +43,7 @@ router.route("/register").post(async (req, res) => {
     const bcryptPassword = await bcrypt.hash(password, salt);
 
     // Enter the new user inside the database
-    const newUser = await Pool.query(
+    const newUser = await pool.query(
       "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
       [email, bcryptPassword]
     );
@@ -61,6 +59,8 @@ router.route("/register").post(async (req, res) => {
     console.error(err.message);
     res.status(500).send("Server Error");
   }
-});
+};
+
+router.route("/api/register").post(registerUser);
 
 module.exports = router;

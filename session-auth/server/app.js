@@ -1,16 +1,12 @@
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
-const db = require("./db");
-const registerRouter = require("./routes/registerRoutes");
+const redis = require("redis");
+const connectRedis = require("connect-redis");
+const db = require("../db");
+const registerRouter = require("../routes/registerRoutes");
 
 const app = express();
-
-// Middleware
-app.use(express.json());
-
-// Routes
-app.use("/", registerRouter);
 
 const TWO_HOURS = 1000 * 60 * 60 * 2;
 
@@ -24,9 +20,17 @@ const {
 
 const IN_PROD = NODE_ENV === "production";
 
+const RedisStore = connectRedis(session);
+const redisClient = redis.createClient();
+
+// Middleware
 app.use(
   session({
     name: SESS_NAME,
+    store: new RedisStore({
+      client: redisClient,
+      disableTouch: true,
+    }),
     resave: false,
     saveUninitialized: false,
     secret: SESS_SECRET,
@@ -38,10 +42,9 @@ app.use(
   })
 );
 
-// app.get("/", async (req, res) => {
-//   const results = await db.query("SELECT * FROM users");
-//   console.log(results.rows);
-//   res.end("Hello World");
-// });
+app.use(express.json());
 
-app.listen(PORT, (req, res) => console.log(`http://localhost:${PORT}`));
+// Routes
+app.use("/", registerRouter);
+
+app.listen(PORT, () => console.log(`Listening on http://localhost:${PORT}`));
