@@ -3,8 +3,7 @@ const express = require("express");
 const session = require("express-session");
 const redis = require("redis");
 const connectRedis = require("connect-redis");
-const db = require("../db");
-const registerRouter = require("../routes/registerRoutes");
+const userRouter = require("./routes/userRoutes");
 
 const app = express();
 
@@ -45,6 +44,6 @@ app.use(
 app.use(express.json());
 
 // Routes
-app.use("/", registerRouter);
+app.use("/api/users", userRouter);
 
 app.listen(PORT, () => console.log(`Listening on http://localhost:${PORT}`));

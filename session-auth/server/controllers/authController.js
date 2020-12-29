@@ -1,10 +1,7 @@
-const express = require("express");
 const bcrypt = require("bcrypt");
 const pool = require("../db");
 
-const router = express.Router();
-
-const registerUser = async (req, res) => {
+exports.signUp = async (req, res) => {
   try {
     // Destructure req.body
     const { email, password } = req.body;
@@ -60,7 +57,3 @@ const registerUser = async (req, res) => {
     res.status(500).send("Server Error");
   }
 };
-
-router.route("/api/register").post(registerUser);
-
-module.exports = router;
