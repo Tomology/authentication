@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const { restart } = require("nodemon");
 const pool = require("../db");
 
 exports.signUp = async (req, res) => {
@@ -48,12 +49,54 @@ exports.signUp = async (req, res) => {
     // Store user id session
     // this will set a cookie on the user
     // keep them logged in
-    req.session.userId = newUser.rows[0].id;
+    req.session.userId = newUser.rows[0].user_id;
 
     // Send response
+    delete newUser.rows[0].password;
     res.json(newUser.rows[0]);
   } catch (err) {
     console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+};
+
+exports.login = async (req, res) => {
+  try {
+    // Destructure req.body
+    const { email, password } = req.body;
+
+    // Check required input fields
+    if (!email || !password) {
+      res.status(400).send("Please provide your email or password!");
+    }
+
+    // Check if user exists
+    const user = await pool.query("SELECT * FROM users WHERE email=$1", [
+      email,
+    ]);
+
+    if (user.rows.length === 0) {
+      return res.status(401).send("Invalid credentials!");
+    }
+
+    // Check if password matches database password
+    const validPassword = await bcrypt.compare(password, user.rows[0].password);
+
+    if (!validPassword) {
+      return res.status(401).send("Invalid credentials!");
+    }
+
+    // Store user id session
+    // this will set a cookie on the user
+    // keep them logged in
+    req.session.userId = user.rows[0].user_id;
+
+    // Send response without password field
+    delete user.rows[0].password;
+
+    res.json(user.rows[0]);
+  } catch (err) {
+    console.error(err);
     res.status(500).send("Server Error");
   }
 };
