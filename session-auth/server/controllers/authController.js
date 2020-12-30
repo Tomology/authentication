@@ -90,6 +90,7 @@ exports.login = async (req, res) => {
     // keep them logged in
     req.session.userId = user.rows[0].user_id;
     console.log(req.session);
+
     // Send response without password field
     delete user.rows[0].password;
 
@@ -105,7 +106,7 @@ exports.protect = async (req, res, next) => {
   if (!req.session.userId) {
     console.log("User not authenticated");
   } else {
-    console.log("User authenticated!");
+    console.log("User authenticated! Id is: ", req.session.userId);
   }
   next();
 };
