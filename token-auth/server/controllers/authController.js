@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const pool = require("../db");
+const { sign, verify } = require("jsonwebtoken");
 
 exports.signUp = async (req, res) => {
   try {
@@ -45,10 +46,29 @@ exports.signUp = async (req, res) => {
       [email, bcryptPassword]
     );
 
-    // Store user id session
-    // this will set a cookie on the user
-    // keep them logged in
-    req.session.userId = newUser.rows[0].user_id;
+    // Create access token and refresh token using JWT, and place them in cookies
+    const refreshToken = sign(
+      { userId: newUser.id, count: user.count },
+      process.env.REFRESH_TOKEN_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    const accessToken = sign(
+      { userId: newUser.id },
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: "15min",
+      }
+    );
+
+    res.cookie("refresh-token", refreshToken, {
+      expire: 1000 * 60 * 60 * 24 * 7,
+    });
+    res.cookie("access-token", accessToken, {
+      expire: 1000 * 60 * 15,
+    });
 
     // Send response
     delete newUser.rows[0].password;
@@ -85,10 +105,7 @@ exports.login = async (req, res) => {
       return res.status(401).send("Invalid credentials!");
     }
 
-    // Store user id session
-    // this will set a cookie on the user
-    // keep them logged in
-    req.session.userId = user.rows[0].user_id;
+    // Verify data
 
     // Send response without password field
     delete user.rows[0].password;
@@ -100,12 +117,74 @@ exports.login = async (req, res) => {
   }
 };
 
-exports.protect = async (req, res, next) => {
-  // Get session id
-  if (!req.session.userId) {
-    console.log("User not authenticated");
-  } else {
-    console.log("User authenticated! Id is: ", req.session.userId);
+const createTokens = (user) => {
+  const refreshToken = sign(
+    { userId: user.id, count: user.count },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: "7d",
+    }
+  );
+  const accessToken = sign(
+    { userId: user.id },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: "15min",
+    }
+  );
+
+  return { refreshToken, accessToken };
+};
+
+const invalidateTokens = async (req, res) => {
+  if (!req.userId) {
+    return false;
   }
+
+  const user = await pool.query(
+    `SELECT * FROM users WHERE user_id=${req.userId}`
+  );
+
+  user.count += 1;
+  await user.save(); // check if this syntax is good
+
+  return true;
+};
+
+exports.protect = async (req, res, next) => {
+  const refreshToken = req.cookies["refresh-token"];
+  const accessToken = req.cookies["access-token"];
+  if (!refreshToken && !accessToken) {
+    return next();
+  }
+  try {
+    const accessToken = req.cookies["access-token"];
+    const data = verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+    req.userId = data.user_id;
+    return next();
+  } catch (err) {}
+  if (!refreshToken) {
+    return next();
+  }
+
+  let data;
+  try {
+    data = verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+  } catch (err) {
+    return next();
+  }
+
+  const user = await pool.query(
+    `SELECT * FROM users WHERE user_id=${data.userId}`
+  );
+  // token has been invalidated
+  if (!user || user.count !== data.count) {
+    return next();
+  }
+
+  const tokens = createTokens(user);
+  res.cookie("refresh-token", tokens.refreshToken);
+  res.cookie("access-token", tokens.accessToken);
+  req.userId = user.user_id;
   next();
 };

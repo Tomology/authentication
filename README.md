@@ -7,7 +7,10 @@
    - [Introduction](#introduction)
    - [Dependencies](#dependencies)
 
-2. Token Based Authentication
+2. [Token Based Authentication](<#token-based-authentication-(jwt)>)
+
+   - [Introduction](#introduction)
+   - [Dependencies](#dependencies)
 
 3. [Managing Passwords](#managing-passwords)
 
@@ -35,7 +38,7 @@ A cookie is a small piece of text stored on a user's computer by their browser.
 
 ### Dependencies
 
-#### 'express-session'
+'express-session'
 
 `npm install express-session`
 
@@ -113,20 +116,22 @@ Control the result of unsetting `req.session` (through `delete`, setting to `nul
 
 ### Implementation
 
-## JWT Token
+## Token Based Authentication (JWT)
+
+### Introduction
 
 JSON Web Tokens (JWT) are a stateless solution for authentication - there is no need to store any session on the server. They are suited for RESTful APIs.
 
 An encoded JWT looks like a string. It is made up of three parts:
 
 1. Header<br>
-   Metadata about the token itself.<br><br>
+   Metadata about the token itself. Typically consists of two parts: the type of token, which is JWT, and the signing algorithm being used, such as HMAC SHA256 or RSA.Then, this JSON is Base64Url encoded to form the first part of the JWT.<br><br>
 2. Payload<br>
-   Data that we can encode into the token. Note: This data (as well as the metadata int he header) is encoded but not encrypted. Anyone will be able to decode them and read them. Sensitive data shouldn't be stored here.<br><br>
+   Data that we can encode into the token. Note: This data (as well as the metadata in the header) is encoded but not encrypted. Anyone will be able to decode them and read them. Sensitive data shouldn't be stored here. The payload is Base64Url encoded.<br><br>
 3. Signature<br>
-   The signature is created using the header, the payload, and the secret that is saved on the server. This will 'sign' of the JWT. The signing algorithm takes the header, the payload, and the secret to create a unique signature. <br><br>
+   The signature is created by taking the encoded header, the encoded payload, the secret that is saved on the server, and then using the algorithm specified in the header. The signature is used to verify the message wasn't changed along the way, and, in the case of tokens signed with a private key, it can also verify that the sender of the JWT is who it says it is.<br><br>
 
-Together with the header and the payload, the signature forms the JWT. When a JWT is sent to a server, the server needs to verify it. It will verify that no-one has changed the header or the payload data of the token. The verification will take the header and payload, along with the secret which is saved on the server, and create a test signature. The original signature when the JWT was first created is still in the token. The test signature is compared to the original signature. If test signature is the same as the original signature, then it means that the payload and the header have not been modified.
+When a JWT is sent to a server, the server needs to verify it i.e. verify that no-one has changed the header or the payload data of the token. The verification will take the header and payload, along with the secret which is saved on the server, and create a test signature. The original signature when the JWT was first created is still in the token. The test signature is compared to the original signature. If test signature is the same as the original signature, then it means that the payload and the header have not been modified.
 
 Simple Walkthrough:
 
@@ -139,6 +144,29 @@ Simple Walkthrough:
 7. If valid, the requested data will be sent back to the client. If not, an error will be sent back.
 
 Note: all JWT communication must happen over HTTPS?
+
+### Dependencies
+
+'jsonwebtoken'
+
+`npm install jsonwebtoken`
+
+### Usage
+
+`const jwt = require('jsonwebtoken');`
+
+Signing the token:<br>
+`jwt.sign(payload, secretKey, [options, callback]);`
+
+In authentication, the payload you want to send is the user's ID. For example:<br>
+`const payload = { user: { id: user.id, }, };`
+
+### Refresh Tokens
+
+An extra 'count' column will be added to our users table in our database. It stores the version of the token that is live and that people are using. It is going to be unique per user.
+When someone logs into our app, we are going to validate that and if it is valid, we are then going to send back two tokens - a refresh token, and an access token (both will be JWT). The refresh token will be a long lived token. The access token will expire after a short time. Inside both these tokens we will store the user ID. In the refresh token we will store the current count that the user has in the database. We will be sending these back with two cookies.
+What happens when the access token expires? If the refresh token is valid, we will refresh the access token, if not, we treat them as an unauthenticated user.
+Expired access token --> Server - Fetch User -> DataBase (compare count that is in the database to the count that is in the refresh token) - User -> Server --> New Access Token
 
 ## Managing Passwords
 
