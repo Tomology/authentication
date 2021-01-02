@@ -131,6 +131,11 @@ An encoded JWT looks like a string. It is made up of three parts:
 3. Signature<br>
    The signature is created by taking the encoded header, the encoded payload, the secret that is saved on the server, and then using the algorithm specified in the header. The signature is used to verify the message wasn't changed along the way, and, in the case of tokens signed with a private key, it can also verify that the sender of the JWT is who it says it is.<br><br>
 
+#### Base64Url?<br>
+
+The header and payload in a JWT are encoded using Base64Url. This is to ensure that no character encoding issues when the JWT is sent accross the network e.g. garbled text "qÃ®Ã¼Ã¶:Ã". This problem happens because different computers across the world are handling strings in different character encodings, e.g. UTF-8, ISO 8859-1 etc. Whenever we have a string in any platform we have an encoding being used. Even if we didn't specify any encoding - either the default OS encoding will be used, or it will be taken from a config parameter in our server. If we want to send strings accross a network without worrying about these issues, we choose a subset of characters that all common encodings handle the same way, and that is how the Base64 encoding format was born.<br>
+Base64Url is similar to Base64, it just has a couple of characters different so we can easily send a JWT as part of a URL parameter.
+
 When a JWT is sent to a server, the server needs to verify it i.e. verify that no-one has changed the header or the payload data of the token. The verification will take the header and payload, along with the secret which is saved on the server, and create a test signature. The original signature when the JWT was first created is still in the token. The test signature is compared to the original signature. If test signature is the same as the original signature, then it means that the payload and the header have not been modified.
 
 Simple Walkthrough:
