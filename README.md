@@ -120,7 +120,7 @@ Control the result of unsetting `req.session` (through `delete`, setting to `nul
 
 ### Introduction
 
-JSON Web Tokens (JWT) are a stateless solution for authentication - there is no need to store any session on the server. They are suited for RESTful APIs.
+JSON Web Tokens (JWT) are a stateless solution for authentication - there is no need to store any session on the server. This makes them suited for RESTful APIs.
 
 An encoded JWT looks like a string. It is made up of three parts:
 
@@ -133,7 +133,7 @@ An encoded JWT looks like a string. It is made up of three parts:
 
 #### Base64Url?<br>
 
-The header and payload in a JWT are encoded using Base64Url. This is to ensure that no character encoding issues when the JWT is sent accross the network e.g. garbled text "qÃ®Ã¼Ã¶:Ã". This problem happens because different computers across the world are handling strings in different character encodings, e.g. UTF-8, ISO 8859-1 etc. Whenever we have a string in any platform we have an encoding being used. Even if we didn't specify any encoding - either the default OS encoding will be used, or it will be taken from a config parameter in our server. If we want to send strings accross a network without worrying about these issues, we choose a subset of characters that all common encodings handle the same way, and that is how the Base64 encoding format was born.<br>
+The header, payload, and secret in a JWT are encoded using Base64Url. This is to ensure that there are no character encoding issues when the JWT is sent accross the network e.g. garbled text "qÃ®Ã¼Ã¶:Ã". This problem happens because different computers across the world are handling strings in different character encodings e.g. UTF-8, ISO 8859-1 etc. Whenever we have a string in any platform we have an encoding being used, even if we didn't specify any encoding. Either the default OS encoding will be used, or it will be taken from a config parameter in our server. If we want to send strings accross a network without worrying about these issues, we choose a subset of characters that all common encodings handle the same way, and that is how the Base64 encoding format was born.<br>
 Base64Url is similar to Base64, it just has a couple of characters different so we can easily send a JWT as part of a URL parameter.
 
 When a JWT is sent to a server, the server needs to verify it i.e. verify that no-one has changed the header or the payload data of the token. The verification will take the header and payload, along with the secret which is saved on the server, and create a test signature. The original signature when the JWT was first created is still in the token. The test signature is compared to the original signature. If test signature is the same as the original signature, then it means that the payload and the header have not been modified.
@@ -149,6 +149,34 @@ Simple Walkthrough:
 7. If valid, the requested data will be sent back to the client. If not, an error will be sent back.
 
 Note: all JWT communication must happen over HTTPS?
+
+#### JWT Signatures
+
+The two most common signing algorithms for JWT are **HS256** & **RS256**.
+
+**HS256**<br>
+HS256 takes the provided data and passes it through a hashing function (Secure Hash Algorithm SHA-256). The hashing function converts the provided data into another value (hash value) using a secret key. The hashed output is called an HMAC (Hash-Based Message Authentication Code). The last part of the JWT is the HMAC of the header, payload, and secret, encoded in Base64Url.
+
+**RS256**<br>
+With RS256 we are still going to produce a Message Authentication Code, but we are going to separate the ability to create valid tokens, that only the Authentication server should have, from the ability to validate JWT tokens, that only our Application server would benefit from doing. The way that we are going to do that is by creating two keys instead of one:<br>
+
+- There will still be a private key but this time it will be owned only by the Authentication server, used only to sign JWTs.
+- The private key can be used to sign JWTs, but it cannot be used to validate them.
+- There is a second key called the public key, which is used by the application server only to validate JWTs.
+- The public key can be used to validate JWT signatures, but it cannot be used to sign new JWTs.
+- The public key does not need to be kept private and it often is not, because if the attacker gets it there is no way to use it to forge signatures.
+
+RS256 signatures use particular type of keys, called RSA keys (Riverst-Shamir-Adleman). RSA is the name of an encryption/decryption algorithm that takes one key to encrypt and a second key to decrypt. RSA is not a Hashing function, because by definition the output of encryption can be reversed and we can get back the initial result.<br>
+
+In a JWT, we take the header and payload and we hash them first, using for example SHA-256. This is something very fast to do, and we obtain a unique representation of the inpur data that is much smaller than the actual data itself. We then take the hash output, and encrypt that instead of the whole data (header plus payload) using the RSA private key, which gives us the RS256 signature. We then append it to the JWT as the signature and send it.<br>
+
+The receiver of the JWT will then:
+
+- take the header and the payload, and hash everything with SHA-256.
+- decrypt the signature using the public key, and obtain the signature hash.
+- the receiver compares the signature hash with the hash that he calculated himself based on the Header and the Payload.
+
+Do the two hashes match? Then this proves that the JWT was indeed created by the Authentication server. Anyonw could have calculated that hash, but only the Authentication server could have encrypted it with the matching RSA private key.
 
 ### Dependencies
 
